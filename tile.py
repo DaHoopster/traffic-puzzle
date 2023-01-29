@@ -49,7 +49,10 @@ class Tile:
     return hash((self._north, self._east, self._south, self._west))
 
   def __repr__(self) -> str:
-    return f"Tile [{self._north.__repr__()},{self._east.__repr__()},{self._south.__repr__()},{self._west.__repr__()}]"
+    return f"Tile [{','.join(map(lambda c: c.__repr__(), self._original_orientation))}]"
+
+  def __str__(self) -> str:
+    return f"Tile<🌀{self.rotation_count}> [{self.north}, {self.east}, {self.south}, {self.west}]"
 
   def can_connect(self, self_edge: Connection, tile: Tile, tile_edge: Connection) -> bool:
     return self_edge is not None and \
@@ -77,6 +80,16 @@ class Tile:
     if temp_west is not None:
       temp_west.rotate()
     self._north = temp_west
+
+    self._rotation_count += 1
+
+  def reset(self):
+    (original_north, original_east, original_south, original_west) = self.original_orientation
+    self._north = copy.deepcopy(original_north)
+    self._east = copy.deepcopy(original_east)
+    self._south = copy.deepcopy(original_south)
+    self._west = copy.deepcopy(original_west)
+    self._rotation_count = 0
 
 
 if __name__ == '__main__':
@@ -126,3 +139,18 @@ if __name__ == '__main__':
   assert tile_1.original_orientation[0].color == Color.GREEN
   assert tile_1.original_orientation[0].connector == Connector.HEAD
   assert tile_1.original_orientation[0].direction == Direction.NORTH
+  # check for reset and rotate
+  tile_1.reset()
+  tile_1.rotate()
+  assert tile_1.north is None
+  assert tile_1.east.direction == Direction.EAST
+  assert tile_1.east.color == Color.GREEN
+  assert tile_1.east.connector == Connector.HEAD
+  assert tile_1.south.direction == Direction.SOUTH
+  assert tile_1.south.color == Color.ORANGE
+  assert tile_1.south.connector == Connector.TAIL
+  assert tile_1.west is None
+  # check original orientation
+  assert tile_1.original_orientation[0].direction == Direction.NORTH
+  assert tile_1.original_orientation[0].color == Color.GREEN
+  assert tile_1.original_orientation[0].connector == Connector.HEAD

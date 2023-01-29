@@ -14,26 +14,31 @@ from puzzle_board_viewer import view_board
 
 class Puzzle:
   class Move:
-    def __init__(self, tile: Tile, coord: Tuple[int, int]):
+    def __init__(self, tile: Tile, rotation_count: int, coord: Tuple[int, int]):
       self._tile = tile
+      self._rotation_count = rotation_count
       self._coord = coord
 
     @property
-    def tile(self):
+    def tile(self) -> Tile:
       return self._tile
 
     @property
-    def coord(self):
+    def rotation_count(self) -> int:
+      return self._rotation_count
+
+    @property
+    def coord(self) -> Tuple[int, int]:
       return self._coord
 
     def __repr__(self):
-      return f"{self._tile} @ {self.coord}"
+      return f"{self._tile.__repr__()} 🌀 {self.rotation_count} @ {self.coord}"
 
     def __eq__(self, other: Puzzle.Move) -> bool:
-      return self.tile == other.tile and self.coord == other.coord
+      return self.tile == other.tile and self.rotation_count == other.rotation_count and self.coord == other.coord
 
     def __hash__(self):
-      return hash((self.tile, self.coord))
+      return hash((self.tile, self.rotation_count, self.coord))
 
   # NOTE: needs to model the coordinates of the Tile
   # NOTE: to correctly place a tile with multiple connections, e.g.
@@ -188,7 +193,7 @@ class Puzzle:
       north_score * east_score * south_score * west_score,
     )
 
-  def place_tile(self, tile: Tile, coord: Tuple[int, int]) -> bool:
+  def place_tile(self, tile: Tile, rotation_count: int, coord: Tuple[int, int]) -> bool:
     # make sure coord is one of the allowed moves
     coord_row = coord[0]
     coord_col = coord[1]
@@ -202,6 +207,10 @@ class Puzzle:
     else:
       # the below assert should not fail if board and other indices are kept in sync
       assert self._board[coord_row][coord_col] is None
+      # make sure the tile is in the right orientation
+      tile.reset()
+      for _ in range(0, rotation_count):
+        tile.rotate()
       # check if the tile can be placed
       if self.can_place_tile(tile=tile, coord=coord)[0] is True:
         # update board
@@ -216,11 +225,11 @@ class Puzzle:
 
         return True
 
-  def next_moves(self) -> Tuple[int, List[Move]]:
+  def next_moves(self, allow_rotation: bool = False) -> Tuple[int, List[Move]]:
     tiles_remaining = len(self.tiles) - len(self.placed_tiles)
     print(f"🦀 remaining tiles {tiles_remaining}, allowed coords {len(self.allowed_coords)}")
     # successfully completed
-    if tiles_remaining < 2:
+    if tiles_remaining == 0:
       print(f"🏅 success! - {tiles_remaining}")
       return (-1, [])
     elif len(self.allowed_coords) == 0:
@@ -234,30 +243,41 @@ class Puzzle:
       moves = []
 
       for possible_coord in allowed_coords_copy:
-        max_scoring_tiles = []
+        # a list of tuple (tile, rotation_count)
+        max_scoring_tiles: List[Tuple[Tile, int]] = []
         max_score = 0
 
         for tile in self.tiles:
           if tile.__repr__() not in placed_copy:
-            (possible, score) = self.can_place_tile(tile=tile, coord=possible_coord)
-            if possible:
-              if score == max_score:
-                max_scoring_tiles.append(tile)
-              elif score > max_score:
-                max_score = score
-                max_scoring_tiles = [tile]
+            spins = [0, 1, 2, 3] if allow_rotation else [0]
+            for spin in spins:
+              tile.reset()
+
+              for _ in '.' * spin:
+                tile.rotate()
+
+              (possible, score) = self.can_place_tile(tile=tile, coord=possible_coord)
+              if possible:
+                if score == max_score:
+                  max_scoring_tiles.append((tile, tile.rotation_count))
+                elif score > max_score:
+                  max_score = score
+                  max_scoring_tiles = [(tile, tile.rotation_count)]
 
         print(f"📝 For coord {possible_coord}, max score: {max_score}. max scoring tiles: {max_scoring_tiles}")
         if max_score > max_score_all_possible_coords:
           # replace the score and moves
           max_score_all_possible_coords = max_score
           moves.clear()
-          for max_scoring_tile in max_scoring_tiles:
-            attempting_move = Puzzle.Move(tile=max_scoring_tile, coord=possible_coord)
+
+          for max_scoring_tile, tile_rotation_count in max_scoring_tiles:
+            # add to moves
+            attempting_move = Puzzle.Move(tile=max_scoring_tile, rotation_count=tile_rotation_count, coord=possible_coord)
             moves.append(attempting_move)
         elif max_score == max_score_all_possible_coords:
-          for max_scoring_tile in max_scoring_tiles:
-            attempting_move = Puzzle.Move(tile=max_scoring_tile, coord=possible_coord)
+          for max_scoring_tile, tile_rotation_count in max_scoring_tiles:
+            # add to moves
+            attempting_move = Puzzle.Move(tile=max_scoring_tile, rotation_count=tile_rotation_count, coord=possible_coord)
             moves.append(attempting_move)
         # debugging purposes
         coord_scores[possible_coord] = max_score
@@ -269,30 +289,30 @@ class Puzzle:
 
       return (max_score_all_possible_coords, moves)
 
-  def solve(self, export_board: bool = False) -> None:
+  def solve(self, export_board: bool = False, allow_rotation: bool = False) -> None:
     solved_puzzles = []
 
     # place each tile as first
     for first_tile_idx, first_tile in enumerate(self._tiles):
       worker_puzzle = Puzzle(board=self.board, tiles=self.tiles)
       worker_puzzle.reset()
-      puzzle_moves = [(1, [Puzzle.Move(tile=first_tile, coord=Puzzle.FIRST_TILE_COORD)])]
+      puzzle_moves = [(1, [Puzzle.Move(tile=first_tile, rotation_count=0, coord=Puzzle.FIRST_TILE_COORD)])]
       max_move_score = 1
       has_more_moves = True
 
       while has_more_moves:
         next_puzzle_moves = []
-        print(f"=== puzzle moves: {puzzle_moves}")
         for (_, moves) in puzzle_moves:
           for move in moves:
             tile_in_move = move.tile
+            rotation_count_in_move = move.rotation_count
             coord_in_move = move.coord
 
-            if worker_puzzle.place_tile(tile=tile_in_move, coord=coord_in_move):
+            if worker_puzzle.place_tile(tile=tile_in_move, rotation_count=rotation_count_in_move, coord=coord_in_move):
               # first made move wins
               print(f"  💋 Move made: {move}")
 
-              next_possible_moves = (nm_score, _) = worker_puzzle.next_moves()
+              next_possible_moves = (nm_score, _) = worker_puzzle.next_moves(allow_rotation=allow_rotation)
 
               if nm_score == -1:
                 solved_puzzles.append(worker_puzzle)
@@ -384,16 +404,16 @@ if __name__ == '__main__':
     assert puzzle.can_place_tile(tile=tile_3, coord=(21, 20)) == (True, 1)  # None - None connections
     assert puzzle.can_place_tile(tile=tile_3, coord=(20, 19)) == (True, 3)  # head - tail on purple
     # test place_tile
-    puzzle.place_tile(tile=tile_3, coord=(20, 19))
+    puzzle.place_tile(tile=tile_3, rotation_count=0, coord=(20, 19))
     assert [c for c in puzzle._allowed_coords] == [(21, 20), (21, 19), (19, 20), (19, 19), (20, 18), (20, 21)]
 
-    puzzle.place_tile(tile=tile_4, coord=(20, 21))    
+    puzzle.place_tile(tile=tile_4, rotation_count=0, coord=(20, 21))    
     assert [c for c in puzzle.allowed_coords] == [(21, 20), (21, 19), (19, 20), (19, 19), (21, 21), (20, 22), (20, 18), (19, 21)]
 
-    puzzle.place_tile(tile=tile_5, coord=(21, 21))
+    puzzle.place_tile(tile=tile_5, rotation_count=0, coord=(21, 21))
     assert [c for c in puzzle.allowed_coords] == [(21, 20), (22, 21), (21, 19), (19, 20), (21, 22), (19, 19), (20, 22), (20, 18), (19, 21)]
 
-    puzzle.place_tile(tile=tile_6, coord=(21, 20))
+    puzzle.place_tile(tile=tile_6, rotation_count=0, coord=(21, 20))
     assert [c for c in puzzle.allowed_coords] == [(22, 21), (21, 19), (19, 20), (22, 20), (21, 22), (19, 19), (20, 22), (20, 18), (19, 21)]
 
   def test_solve():
@@ -445,4 +465,49 @@ if __name__ == '__main__':
 
     puzzle.solve()
 
-  test_solve()
+  def test_solve_with_rotation():
+    tile_1 = Tile(
+      north=Connection(color=Color.BEIGE, direction=Direction.NORTH, connector=Connector.ROAD),
+      east=None,
+      south=None,
+      west=Connection(color=Color.YELLOW, direction=Direction.WEST, connector=Connector.TAIL)
+    )
+
+    tile_2 = Tile(
+      north=Connection(color=Color.BEIGE, direction=Direction.NORTH, connector=Connector.ROAD),
+      east=Connection(color=Color.PURPLE, direction=Direction.EAST, connector=Connector.HEAD),
+      south=None,
+      west=None
+    )
+
+    tile_3 = Tile(
+      north=None,
+      east=Connection(color=Color.PURPLE, direction=Direction.EAST, connector=Connector.TAIL),
+      south=None,
+      west=Connection(color=Color.YELLOW, direction=Direction.WEST, connector=Connector.HEAD)
+    )
+
+    puzzle = Puzzle()
+    for t in [tile_1, tile_2, tile_3]:
+      puzzle.add_tile(tile=t)
+
+    puzzle._place_first_tile(tile=tile_1)
+    max_score_next_moves, moves = puzzle.next_moves(allow_rotation=True)
+    assert max_score_next_moves == 5
+    assert len(moves) == 1
+
+    next_move = moves[0]
+    assert next_move.rotation_count == 2
+    assert next_move.tile.__repr__() == 'Tile [BEIGE ROAD @ NORTH,PURPLE HEAD @ EAST,None,None]'
+    assert puzzle.place_tile(tile=next_move.tile, rotation_count=next_move.rotation_count, coord=next_move.coord) is True
+
+    placed_tile = puzzle.board[19][20]
+    assert placed_tile.__repr__() == 'Tile [BEIGE ROAD @ NORTH,PURPLE HEAD @ EAST,None,None]'
+    assert placed_tile.rotation_count == 2
+    assert placed_tile.__str__() == 'Tile<🌀2> [None, None, BEIGE ROAD @ SOUTH, PURPLE HEAD @ WEST]'
+
+    # run solve with rotation
+    puzzle.reset()
+    puzzle.solve(allow_rotation=True)
+
+  test_solve_with_rotation()

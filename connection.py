@@ -71,3 +71,12 @@ if __name__ == '__main__':
   assert conn_3.is_direction_matching(conn=conn_5) is False
   # show string representation
   print(conn_1)
+  # test rotate
+  conn_1.rotate()
+  assert conn_1.direction == Direction.EAST
+  conn_1.rotate()
+  assert conn_1.direction == Direction.SOUTH
+  conn_1.rotate()
+  assert conn_1.direction == Direction.WEST
+  conn_1.rotate()
+  assert conn_1.direction == Direction.NORTH
