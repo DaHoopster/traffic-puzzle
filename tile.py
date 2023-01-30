@@ -2,18 +2,25 @@ from __future__ import annotations
 
 from typing import Tuple
 import copy
+import uuid
+
 from enums import Color, Connector, Direction
 from connection import Connection
 
 
 class Tile:
   def __init__(self, north: Connection, east: Connection, south: Connection, west: Connection):
+    self._id = str(uuid.uuid4())
     self._north = north
     self._east = east
     self._south = south
     self._west = west
     self._rotation_count = 0
     self._original_orientation = (copy.deepcopy(self._north), copy.deepcopy(self._east), copy.deepcopy(self._south), copy.deepcopy(self._west))
+
+  @property
+  def id(self) -> str:
+    return self._id
 
   @property
   def north(self) -> Connection:
@@ -40,19 +47,16 @@ class Tile:
     return self._rotation_count
 
   def __eq__(self, other: Tile) -> bool:
-    return self._north.__eq__(other.north) and \
-      self._east.__eq__(other.east) and \
-      self._south.__eq__(other.south) and \
-      self._west.__eq__(other.west)
+    return self.id.__eq__(other.id)
 
   def __hash__(self):
-    return hash((self._north, self._east, self._south, self._west))
+    return hash(self.id)
 
   def __repr__(self) -> str:
-    return f"Tile [{','.join(map(lambda c: c.__repr__(), self._original_orientation))}]"
+    return f"Tile({self.id}) [{','.join(map(lambda c: c.__repr__(), self._original_orientation))}]"
 
   def __str__(self) -> str:
-    return f"Tile<🌀{self.rotation_count}> [{self.north}, {self.east}, {self.south}, {self.west}]"
+    return f"Tile({self.id}) <🌀{self.rotation_count}> [{self.north}, {self.east}, {self.south}, {self.west}]"
 
   def can_connect(self, self_edge: Connection, tile: Tile, tile_edge: Connection) -> bool:
     return self_edge is not None and \

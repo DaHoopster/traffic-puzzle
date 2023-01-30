@@ -9,6 +9,7 @@ from puzzle import Puzzle
 def _tiles() -> List[Tile]:
   # init and return 28 tile pieces
   tile_pieces = []
+  # checked
   tile_pieces.append(
     Tile(
       north=Connection(color=Color.BEIGE, direction=Direction.NORTH, connector=Connector.ROAD),
@@ -17,7 +18,7 @@ def _tiles() -> List[Tile]:
       west=Connection(color=Color.BEIGE, direction=Direction.WEST, connector=Connector.ROAD)
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=Connection(color=Color.BEIGE, direction=Direction.NORTH, connector=Connector.ROAD),
@@ -26,7 +27,7 @@ def _tiles() -> List[Tile]:
       west=Connection(color=Color.BLUE, direction=Direction.WEST, connector=Connector.TAIL)
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=Connection(color=Color.GREEN, direction=Direction.NORTH, connector=Connector.HEAD),
@@ -53,7 +54,7 @@ def _tiles() -> List[Tile]:
       west=Connection(color=Color.BLUE, direction=Direction.WEST, connector=Connector.HEAD)
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=Connection(color=Color.BEIGE, direction=Direction.NORTH, connector=Connector.ROAD),
@@ -62,7 +63,16 @@ def _tiles() -> List[Tile]:
       west=None
     )
   )
-
+  # dupe piece - 1
+  tile_pieces.append(
+    Tile(
+      north=Connection(color=Color.BEIGE, direction=Direction.NORTH, connector=Connector.ROAD),
+      east=None,
+      south=None,
+      west=Connection(color=Color.YELLOW, direction=Direction.WEST, connector=Connector.TAIL)
+    )
+  )
+  # dupe piece - 2
   tile_pieces.append(
     Tile(
       north=Connection(color=Color.BEIGE, direction=Direction.NORTH, connector=Connector.ROAD),
@@ -72,6 +82,7 @@ def _tiles() -> List[Tile]:
     )
   )
 
+  # checked
   tile_pieces.append(
     Tile(
       north=None,
@@ -87,15 +98,6 @@ def _tiles() -> List[Tile]:
       east=Connection(color=Color.PURPLE, direction=Direction.EAST, connector=Connector.HEAD),
       south=None,
       west=None
-    )
-  )
-
-  tile_pieces.append(
-    Tile(
-      north=Connection(color=Color.BEIGE, direction=Direction.NORTH, connector=Connector.ROAD),
-      east=None,
-      south=None,
-      west=Connection(color=Color.YELLOW, direction=Direction.WEST, connector=Connector.TAIL)
     )
   )
 
@@ -152,7 +154,7 @@ def _tiles() -> List[Tile]:
       west=Connection(color=Color.RED, direction=Direction.WEST, connector=Connector.TAIL)
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=None,
@@ -161,7 +163,7 @@ def _tiles() -> List[Tile]:
       west=Connection(color=Color.BLUE, direction=Direction.WEST, connector=Connector.TAIL)
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=None,
@@ -170,7 +172,7 @@ def _tiles() -> List[Tile]:
       west=Connection(color=Color.ORANGE, direction=Direction.WEST, connector=Connector.HEAD)
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=Connection(color=Color.GREEN, direction=Direction.NORTH, connector=Connector.TAIL),
@@ -188,7 +190,7 @@ def _tiles() -> List[Tile]:
       west=Connection(color=Color.PURPLE, direction=Direction.WEST, connector=Connector.HEAD)
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=Connection(color=Color.GREEN, direction=Direction.NORTH, connector=Connector.HEAD),
@@ -197,7 +199,7 @@ def _tiles() -> List[Tile]:
       west=None
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=None,
@@ -215,7 +217,7 @@ def _tiles() -> List[Tile]:
       west=None
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=None,
@@ -224,7 +226,7 @@ def _tiles() -> List[Tile]:
       west=Connection(color=Color.YELLOW, direction=Direction.WEST, connector=Connector.HEAD)
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=None,
@@ -242,7 +244,7 @@ def _tiles() -> List[Tile]:
       west=Connection(color=Color.ORANGE, direction=Direction.WEST, connector=Connector.TAIL)
     )
   )
-
+  # checked
   tile_pieces.append(
     Tile(
       north=None,
@@ -273,6 +275,4 @@ def run():
 
 
 if __name__ == '__main__':
-  for n in range(0, 500):
-    print(f"puzzle solving run #{n + 1}")
-    run()
+  run()

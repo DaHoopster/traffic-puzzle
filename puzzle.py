@@ -73,7 +73,6 @@ class Puzzle:
   def __init__(self, tiles: List[Tile] = None, placed: Dict[str, Tuple[int, int]] = None, board: List[List[Tile]] = None, filled_coords: Set[Tuple[int, int]] = None, allowed_coords: Set[Tuple[int, int]] = None):
     # tile repr: tile obj
     self._tiles = tiles or []
-    self._tiles_index = {tile.__repr__(): tile for tile in tiles} if self._tiles else {}
     self._placed = placed or {}
     # board is 40 x 40
     self._board = board or [[None for _ in range(0, 41)] for _ in range(0, 41)]
@@ -135,7 +134,7 @@ class Puzzle:
       first_tile = self._tiles[first_tile_idx]
 
     self._board[Puzzle.FIRST_TILE_COORD[0]][Puzzle.FIRST_TILE_COORD[1]] = first_tile
-    self._placed[first_tile.__repr__()] = Puzzle.FIRST_TILE_COORD
+    self._placed[first_tile.id] = Puzzle.FIRST_TILE_COORD
     self._filled_coords.add(Puzzle.FIRST_TILE_COORD)
     self._update_allowed_coords(tile=first_tile, coord=Puzzle.FIRST_TILE_COORD)
 
@@ -152,18 +151,8 @@ class Puzzle:
     self._filled_coords.clear()
     self._allowed_coords = {Puzzle.FIRST_TILE_COORD}
 
-  def print_board(self) -> None:
-    for row_idx, row in enumerate(self.board):
-      row_content = []
-      for item_idx, item in enumerate(row):
-        if item is None:
-          row_content.append('.')
-        else:
-          row_content.append('X')
-
-      print(''.join(row_content))
-
-    print(self.placed_tiles)
+  def remaining_tiles(self) -> List[Tile]:
+    return list(filter(lambda t: t.id not in self.placed_tiles, self.tiles))
 
   def can_place_tile(self, tile: Tile, coord: Tuple[int, int]) -> Tuple[bool, int]:
     # check if the tile can be placed by ALL connections
@@ -219,7 +208,7 @@ class Puzzle:
       if self.can_place_tile(tile=tile, coord=coord)[0] is True:
         # update board
         self._board[coord_row][coord_col] = tile
-        self._placed[tile.__repr__()] = coord
+        self._placed[tile.id] = coord
         # update indices
         if coord in self._allowed_coords:
           self._allowed_coords.remove(coord)
@@ -253,7 +242,7 @@ class Puzzle:
         max_score = 0
 
         for tile in self.tiles:
-          if tile.__repr__() not in placed_copy:
+          if tile.id not in placed_copy:
             spins = [0, 1, 2, 3] if allow_rotation else [0]
             for spin in spins:
               tile.reset()
@@ -509,16 +498,16 @@ if __name__ == '__main__':
     max_score_next_moves, moves = puzzle.next_moves(allow_rotation=True)
     assert max_score_next_moves == 5
     assert len(moves) == 1
+    print(f"next moves: {moves}")
 
     next_move = moves[0]
     assert next_move.rotation_count == 2
-    assert next_move.tile.__repr__() == 'Tile [BEIGE ROAD @ NORTH,PURPLE HEAD @ EAST,None,None]'
     assert puzzle.place_tile(tile=next_move.tile, rotation_count=next_move.rotation_count, coord=next_move.coord) is True
 
     placed_tile = puzzle.board[19][20]
-    assert placed_tile.__repr__() == 'Tile [BEIGE ROAD @ NORTH,PURPLE HEAD @ EAST,None,None]'
+    assert placed_tile.__repr__() == f"Tile({placed_tile.id}) [BEIGE ROAD @ NORTH,PURPLE HEAD @ EAST,None,None]"
     assert placed_tile.rotation_count == 2
-    assert placed_tile.__str__() == 'Tile<🌀2> [None, None, BEIGE ROAD @ SOUTH, PURPLE HEAD @ WEST]'
+    assert placed_tile.__str__() == f"Tile({placed_tile.id}) <🌀2> [None, None, BEIGE ROAD @ SOUTH, PURPLE HEAD @ WEST]"
 
     # run solve with rotation
     puzzle.reset()
