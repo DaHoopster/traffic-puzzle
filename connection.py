@@ -20,6 +20,14 @@ class Connection:
   def direction(self) -> Direction:
     return self._direction
 
+  def rotate(self) -> None:
+    # rotate 90 degrees clockwise each time
+    next_enum_value = self._direction.value + 1
+    if next_enum_value == 5:
+      self._direction = Direction(1)
+    else:
+      self._direction = Direction(next_enum_value)
+
   def __eq__(self, other: Connection) -> bool:
     return self._connector.value == other.connector.value and \
       self._color.value == other.color.value and \
@@ -63,3 +71,12 @@ if __name__ == '__main__':
   assert conn_3.is_direction_matching(conn=conn_5) is False
   # show string representation
   print(conn_1)
+  # test rotate
+  conn_1.rotate()
+  assert conn_1.direction == Direction.EAST
+  conn_1.rotate()
+  assert conn_1.direction == Direction.SOUTH
+  conn_1.rotate()
+  assert conn_1.direction == Direction.WEST
+  conn_1.rotate()
+  assert conn_1.direction == Direction.NORTH

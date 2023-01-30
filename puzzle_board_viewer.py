@@ -10,7 +10,7 @@ TILE_SIZE_HALF_UNIT = 5
 TILE_SIZE_UNIT = 10
 TILE_SIZE = TILE_SIZE_UNIT * 4
 IMAGE_BACKGROUND = 'whitesmoke'
-VISUAL_COLORS = ['black', 'mediumblue', 'gold', 'lime', 'crimson', 'darkorange', 'darkviolet', 'khaki']
+VISUAL_COLORS = ['black', 'mediumblue', 'gold', 'lime', 'crimson', 'darkorange', 'darkviolet', 'khaki', 'orchid']
 VISUAL_CONNECTORS = ['', 'H', 'T', '']
 FONT = ImageFont.truetype(font='SFNSMono.ttf', size=10)
 COORD_FONT = ImageFont.truetype(font='SFNSMono.ttf', size=8)
@@ -29,7 +29,9 @@ def _draw_tile(top_left: Tuple[int, int], tile: Tile, drawing: ImageDraw, coord:
   # draw the tile rectangle
   drawing.rectangle(xy, fill=IMAGE_BACKGROUND, outline=VISUAL_COLORS[0])
   # draw coord
-  drawing.text(top_left, coord.__str__(), fill=VISUAL_COLORS[0], font=COORD_FONT)
+  drawing.text(top_left, str(coord), fill=VISUAL_COLORS[0], font=COORD_FONT)
+  # draw rotation count
+  drawing.text((top_left[0] + TILE_SIZE // 2, top_left[1] + TILE_SIZE // 2), str(tile.rotation_count), fill=VISUAL_COLORS[-1], font=COORD_FONT)
   # draw connections
   connection_rect_top_left = None
   connection_rect_bottom_right = None
