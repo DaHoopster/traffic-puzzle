@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from typing import Dict, List, Set, Tuple
-import copy
 import random
+import os
 from pathlib import Path
 
 from enums import Color, Direction, Connector
@@ -54,6 +54,8 @@ class Puzzle:
   ROAD_ROAD_SCORE = 5
   HEAD_TAIL_SCORE = 3
   NONE_NONE_SCORE = 1
+
+  DEBUG_FLAG = 'DEBUG'
 
   @classmethod
   def neighboring_coords(cls, coord: Tuple[int, int]) -> List[Tuple[int, int]]:
@@ -199,10 +201,12 @@ class Puzzle:
     coord_col = coord[1]
 
     if coord not in self._allowed_coords:
-      print(f"cannot place tile at coordinate {coord}")
+      if os.environ.get(Puzzle.DEBUG_FLAG) is not None:
+        print(f"cannot place tile at coordinate {coord}")
       return False
     elif coord in self._filled_coords:
-      print(f"coordinate {coord} is already occupied")
+      if os.environ.get(Puzzle.DEBUG_FLAG) is not None:
+        print(f"coordinate {coord} is already occupied")
       return False
     else:
       # the below assert should not fail if board and other indices are kept in sync
@@ -227,7 +231,8 @@ class Puzzle:
 
   def next_moves(self, allow_rotation: bool = False) -> Tuple[int, List[Move]]:
     tiles_remaining = len(self.tiles) - len(self.placed_tiles)
-    print(f"🦀 remaining tiles {tiles_remaining}, allowed coords {len(self.allowed_coords)}")
+    if os.environ.get(Puzzle.DEBUG_FLAG) is not None:
+      print(f"🦀 remaining tiles {tiles_remaining}, allowed coords {len(self.allowed_coords)}")
     # successfully completed
     if tiles_remaining == 0:
       print(f"🏅 success! - {tiles_remaining}")
@@ -264,7 +269,6 @@ class Puzzle:
                   max_score = score
                   max_scoring_tiles = [(tile, tile.rotation_count)]
 
-        print(f"📝 For coord {possible_coord}, max score: {max_score}. max scoring tiles: {max_scoring_tiles}")
         if max_score > max_score_all_possible_coords:
           # replace the score and moves
           max_score_all_possible_coords = max_score
@@ -285,11 +289,17 @@ class Puzzle:
         if len(max_scoring_tiles) == 0:
           # no tiles can fit
           self.allowed_coords.remove(possible_coord)
-          print(f"💀 dead coord {possible_coord}")
+          if os.environ.get(Puzzle.DEBUG_FLAG) is not None:
+            print(f"💀 dead coord {possible_coord}")
+
+      if os.environ.get(Puzzle.DEBUG_FLAG) is not None:
+        print(f"---> coord scores: {coord_scores}")
 
       return (max_score_all_possible_coords, moves)
 
   def solve(self, export_board: bool = False, allow_rotation: bool = False) -> None:
+    # shuffle the tiles
+    random.shuffle(self._tiles)
     solved_puzzles = []
 
     # place each tile as first
@@ -302,6 +312,9 @@ class Puzzle:
 
       while has_more_moves:
         next_puzzle_moves = []
+        # shuffle the moves
+        random.shuffle(puzzle_moves)
+
         for (_, moves) in puzzle_moves:
           for move in moves:
             tile_in_move = move.tile
@@ -310,7 +323,8 @@ class Puzzle:
 
             if worker_puzzle.place_tile(tile=tile_in_move, rotation_count=rotation_count_in_move, coord=coord_in_move):
               # first made move wins
-              print(f"  💋 Move made: {move}")
+              if os.environ.get(Puzzle.DEBUG_FLAG) is not None:
+                print(f"  💋 Move made: {move}")
 
               next_possible_moves = (nm_score, _) = worker_puzzle.next_moves(allow_rotation=allow_rotation)
 
